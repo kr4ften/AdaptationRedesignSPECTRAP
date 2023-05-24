@@ -1,0 +1,366 @@
+{
+    Script for fitting parameters of horizontal SPECTRAP beamline
+}
+
+INCLUDE 'COSY';
+
+PROCEDURE RUN;
+    {DEFINE Extra variables}
+
+    VARIABLE COUNTER 1;
+
+    {DEFINE SIMULATION PARAMETERS}
+
+    VARIABLE ORDER 3; {Order of accuracy}
+    VARIABLE DIMS 2; {Phase space dimensions}
+    VARIABLE PARAMS 1; {Additional paramters}
+
+    {DEFINE BEAM}
+
+    VARIABLE EXX 1; {Define emittance}
+    VARIABLE EYY 1;
+
+    VARIABLE XINT 1; {Define Half-width}
+    VARIABLE YINT 1;
+
+    VARIABLE PX 1; {Define position (x)}
+    VARIABLE PA 1; {Define momentum (x)}
+
+    VARIABLE R12 1; {Of diagonal term of beam matrix}
+
+    VARIABLE PY 1; {Define postion (y)}
+    VARIABLE PB 1; {Define momentum (y)}
+
+    VARIABLE R34 1; {Of diagonal term of beam matrix}
+
+    VARIABLE PT 1; {Momentum spread of bunch}
+    VARIABLE PD 1; 
+
+    VARIABLE R56 1; {Of diagonal term of beam matrix}
+
+    VARIABLE PM 1; {Mass spread}
+    VARIABLE PZ 1; {Charge spread}
+
+    {DEFINE BEAMLINE COMPONENTS}
+
+        {EINZEL LENSES}
+
+    VARIABLE EINZEL_A 1;
+    VARIABLE EINZEL_C 1;
+    VARIABLE EINZEL_L 1;
+
+        {QUADRUPOLES}
+
+    VARIABLE QUAD_A 1;
+    VARIABLE QUAD_L 1;
+    VARIABLE QUAD_C 1;
+
+    {DEFINE BEAMLINE SPECIFICATIONS}
+
+    VARIABLE D1 1;
+
+    VARIABLE QD1A 1;
+    VARIABLE QD1B 1;
+
+    VARIABLE D2 1;
+
+    VARIABLE QD2A 1;
+    VARIABLE QD2B 1;
+
+    VARIABLE D3 1;
+
+    VARIABLE E1 1;
+
+    VARIABLE DX 1;
+
+    VARIABLE E2 1;
+
+    VARIABLE DY 1;
+
+    {DEFINE FIT OBJECTIVES}
+
+    VARIABLE OBJ1 1;
+    VARIABLE TARGET_X1 1;
+    VARIABLE TARGET_Y1 1;
+
+    VARIABLE OBJ2 1;
+    VARIABLE TARGET_X2 1;
+    VARIABLE TARGET_Y2 1;
+    VARIABLE TARGET_XP2 1;
+    VARIABLE TARGET_YP2 1;
+
+    VARIABLE OBJ3 1;
+    VARIABLE TARGET_X3 1;
+    VARIABLE TARGET_Y3 1;
+
+    {DEFINE PROCEDURES AND FUNCTIONS}
+
+    PROCEDURE QDRD VOLT_A VOLT_B APERTURE LENGTH SPACE;
+        EQ LENGTH VOLT_A APERTURE;
+        DL SPACE;
+        WRITE 6 'INSIDE QDRD';
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+        EQ LENGTH VOLT_B APERTURE;
+    ENDPROCEDURE;
+
+    PROCEDURE BEAMLINE;
+        UM; CR;
+
+        ENVEL;
+
+        WRITE 6 'BEFORE START';
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+        BP;
+
+        DL D1;
+
+        WRITE 6 'BEFORE QDRD1';
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+        QDRD QD1A QD1B QUAD_A QUAD_L QUAD_C;
+
+        DL D2;
+
+        WRITE 6 'BEFORE QDRD2';        
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+        QDRD QD2A QD2B QUAD_A QUAD_L QUAD_C;
+
+        DL D3;
+
+        TARGET_X2 := ABS(SQRT(SIGMA(1,1)));
+        TARGET_Y2 := ABS(SQRT(SIGMA(3,3)));
+
+        TARGET_XP2 := ABS(SQRT(SIGMA(2,2)));
+        TARGET_YP2 := ABS(SQRT(SIGMA(4,4)));
+        
+        OBJ1 := 10000 * ABS(SIGMA(1,2) - SIGMA(3,4)) 
+        + 100 * ABS(SIGMA(2,2) - SIGMA(4,4));
+
+        OBJ2 := ABS(TARGET_X2 - 0.0075) + ABS(TARGET_Y2 - 0.0075); 
+
+        WRITE 6 'BEFORE E1';        
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+        CEL E1 EINZEL_A EINZEL_L EINZEL_C;
+
+        DL DX;
+
+        WRITE 6 'BEFORE E2';        
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+        CEL E2 EINZEL_A EINZEL_L EINZEL_C;
+
+        DL DY;
+
+        TARGET_X3 := ABS(SQRT(SIGMA(1,1)));
+        TARGET_Y3 := ABS(SQRT(SIGMA(3,3)));
+        OBJ3 := ABS(TARGET_X3 - 0.0025) + ABS(TARGET_Y3 - 0.0025);
+
+        WRITE 6 'BEFORE END';
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+
+    {
+        WRITE 6 'BEFORE END';
+        WRITE 6 'sqrt(1, 1):';
+        WRITE 6 SQRT(SIGMA(1,1));
+        WRITE 6 '(1, 2):';
+        WRITE 6 SIGMA(1,2);
+        WRITE 6 'sqrt(2, 2):';
+        WRITE 6 SQRT(SIGMA(2,2));
+
+        WRITE 6 'sqrt(3, 3):';
+        WRITE 6 SQRT(SIGMA(3,3));
+        WRITE 6 '(3, 4):';
+        WRITE 6 SIGMA(3,4);
+        WRITE 6 'sqrt(4, 4):';
+        WRITE 6 SQRT(SIGMA(4,4));
+    }
+        EP;
+
+    ENDPROCEDURE;
+
+    {INIT SIMULATION}
+
+    ORDER := 3;
+    DIMS := 2;
+    PARAMS := 0;
+
+    OV ORDER DIMS PARAMS; 
+
+    {INIT BEAMLINE COMPONENTS}
+
+        {EINZEL LENSES}
+
+    EINZEL_A := 0.025;
+    EINZEL_C := 0.005;
+    EINZEL_L := 0.03;
+
+        {QUADRUPOLES}
+
+    QUAD_L := 0.1;
+    QUAD_A := 0.06;
+    QUAD_C := 0.005;
+
+    {INIT BEAMLINE SPECIFICATIONS}
+
+        {Final drift space}
+    DX := 0.6;
+    DY := 0.4;
+
+        {Initial drift space}
+    D1 := 0.65; 
+    
+        {QD1}
+    QD1A := -0.4; 
+    QD1B := 0.2; 
+    
+        {Long driftspace}
+    D2 := 1.28;
+    
+        {QD2}
+    QD2A := 0.4;
+    QD2B := -0.2;
+
+        {Start of SPECTRAP driftspace, includes DK25}
+    D3 := 2.075 - DX - DY;
+
+        {Einzel lens}
+    E1 := 0.1;
+
+    E2 := 0.1;
+    
+
+    {START BEAM}
+
+    {45 deg conv}
+
+    WRITE 6 '45 deg conv';
+
+    R12 := -0.004949232003839766; {Off diagonal term in beam matrix}
+    R34 := -0.004949232003839766; {Off diagonal term in beam matrix}
+
+    PX := 0.005;
+    PA := 0.005;
+
+    PY := 0.005;
+    PB := 0.005;
+
+    PT := 0.0; 
+    PD := 0.05; 
+
+    R56 := 0.0; {Off-diagonal term in beam matrix}
+
+    PM := 0.05; {Mass spread of bunch}
+    PZ := 0.0;  {Charge spread of beam}
+
+    RP 13*0.004 39.948 13; {Reference particles}
+    SB PX PA R12 PY PB R34 PT PD R56 PM PZ;   
+
+    {START PLOTTING}
+
+    ER 3 1 3 1 1 1 1 1;
+
+    {ENVEL;}
+
+    {PTY 0;}
+
+    {START BEAMLINE}
+
+    COUNTER := 1;
+    
+    FIT QD1A QD1B QD2A QD2B;
+
+        D3 := 2.075 - DX - DY;
+
+        BEAMLINE;
+
+        WRITE 6 'OBJECTIVES:';
+        WRITE 6 OBJ1;
+        WRITE 6 OBJ2;
+        WRITE 6 OBJ3;
+
+        COUNTER := COUNTER + 1;
+        WRITE 6 COUNTER;
+
+    ENDFIT 1E-6 500 1 OBJ2;
+    
+    COUNTER := 1;
+    
+    FIT E1 E2;
+
+        D3 := 2.075 - DX - DY;
+
+        BEAMLINE;
+
+        WRITE 6 'OBJECTIVES:';
+        WRITE 6 OBJ1;
+        WRITE 6 OBJ2;
+        WRITE 6 OBJ3;
+
+        COUNTER := COUNTER + 1;
+        WRITE 6 COUNTER;
+
+    ENDFIT 1E-6 500 1 OBJ3;
+    
+    {TERMINATION}
+
+    WRITE 6 'QD1A:';
+    WRITE 6 QD1A;
+    WRITE 6 'QD1B:';
+    WRITE 6 QD1B;
+    WRITE 6 'QD2A:';
+    WRITE 6 QD2A;
+    WRITE 6 'QD2B:';
+    WRITE 6 QD2B;
+    WRITE 6 'E1:';
+    WRITE 6 E1;
+    WRITE 6 'D3:';
+    WRITE 6 D3;
+    WRITE 6 'DX:';
+    WRITE 6 DX;
+    WRITE 6 'DY:';
+    WRITE 6 DY;
+    WRITE 6 'E2:';
+    WRITE 6 E2;
+    
+    {45 deg conv}
+
+    WRITE 6 '45 deg conv';
+
+    PG -101 -102 ;
+    pg -10 -10;
+
+ENDPROCEDURE;
+
+RUN;
+END;
