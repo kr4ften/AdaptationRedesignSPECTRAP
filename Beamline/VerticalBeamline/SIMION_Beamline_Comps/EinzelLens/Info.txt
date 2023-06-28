@@ -1,0 +1,4 @@
+Scale: 1.25 gu/mm
+Size: 452 * 150 * 150
+
+Memory usage: 
